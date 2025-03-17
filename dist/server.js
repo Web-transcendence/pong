@@ -48,29 +48,41 @@ class keyInput {
         this.arrowDown = false;
         this.w = false;
         this.s = false;
-        this.start = false;
     }
 }
-// class
-//
-// let maxScore = "6"
-function inputHandler(key, state, input) {
-    let upordown = false;
-    if (state === "down")
-        upordown = true;
-    if (key === "w")
-        input.w = upordown;
-    if (key === "s")
-        input.s = upordown;
-    if (key === "ArrowUp")
-        input.arrowUp = upordown;
-    if (key === "ArrowDown")
-        input.arrowDown = upordown;
-    if (key === "Control")
-        input.start = true;
+class gameState {
+    constructor() {
+        this.state = 0;
+        this.start = false;
+        this.maxScore = "6";
+        this.score1 = "0";
+        this.score2 = "0";
+    }
+    toJSON() {
+        return { type: "Game", state: this.state, start: this.start, score1: this.score1, score2: this.score2 };
+    }
 }
-function resetGame(ball, lPaddle, rPaddle, input) {
-    input.start = false;
+function inputHandler(key, state, input, game) {
+    let upordown = false;
+    if (game.state === 1) {
+        if (state === "down")
+            upordown = true;
+        if (key === "w")
+            input.w = upordown;
+        if (key === "s")
+            input.s = upordown;
+        if (key === "ArrowUp")
+            input.arrowUp = upordown;
+        if (key === "ArrowDown")
+            input.arrowDown = upordown;
+        if (key === "Control")
+            game.start = true;
+    }
+    else if (state === "down")
+        game.state = 1;
+}
+function resetGame(ball, lPaddle, rPaddle, game) {
+    game.start = false;
     if (ball.x < 0)
         ball.angle = Math.PI;
     else
@@ -80,9 +92,13 @@ function resetGame(ball, lPaddle, rPaddle, input) {
     ball.speed = ball.ispeed;
     lPaddle.y = 0.5 * 800;
     rPaddle.y = 0.5 * 800;
-    // if (rPaddle.score === maxScore || lPaddle.score === maxScore) {
-    //     state = 3;
-    // }
+    if (rPaddle.score === game.maxScore || lPaddle.score === game.maxScore) {
+        game.state = 2;
+        game.score1 = lPaddle.score;
+        game.score2 = rPaddle.score;
+        rPaddle.score = "0";
+        lPaddle.score = "0";
+    }
 }
 function norAngle(ball) {
     if (ball.angle < 0)
@@ -113,8 +129,8 @@ function bounceAngle(ball, paddle, side) {
         ball.angle = Math.PI - ball.angle;
     norAngle(ball);
 }
-function moveBall(ball, lPaddle, rPaddle, input) {
-    if (input.start) {
+function moveBall(ball, lPaddle, rPaddle, input, game) {
+    if (game.start) {
         let oldX = ball.x;
         let oldY = ball.y;
         let collision = 0;
@@ -138,11 +154,11 @@ function moveBall(ball, lPaddle, rPaddle, input) {
         }
         if (ball.x > 1200) {
             lPaddle.score = String(Number(lPaddle.score) + 1);
-            resetGame(ball, lPaddle, rPaddle, input);
+            resetGame(ball, lPaddle, rPaddle, game);
         }
         if (ball.x < 0) {
             rPaddle.score = String(Number(rPaddle.score) + 1);
-            resetGame(ball, lPaddle, rPaddle, input);
+            resetGame(ball, lPaddle, rPaddle, game);
         }
         if (ball.y > 800) {
             ball.y = 800 - (ball.y - 800);
@@ -154,26 +170,28 @@ function moveBall(ball, lPaddle, rPaddle, input) {
         }
         norAngle(ball);
     }
-    setTimeout(() => moveBall(ball, lPaddle, rPaddle, input), 10);
+    setTimeout(() => moveBall(ball, lPaddle, rPaddle, input, game), 10);
 }
-function movePaddle(input, lPaddle, rPaddle) {
-    if (input.arrowUp)
-        rPaddle.y -= rPaddle.speed;
-    if (input.arrowDown)
-        rPaddle.y += rPaddle.speed;
-    if (input.w)
-        lPaddle.y -= lPaddle.speed;
-    if (input.s)
-        lPaddle.y += lPaddle.speed;
-    if (rPaddle.y < 0.5 * rPaddle.height)
-        rPaddle.y = 0.5 * rPaddle.height;
-    else if (rPaddle.y > 800 - rPaddle.height * 0.5)
-        rPaddle.y = 800 - 0.5 * rPaddle.height;
-    if (lPaddle.y < 0.5 * lPaddle.height)
-        lPaddle.y = 0.5 * lPaddle.height;
-    else if (lPaddle.y > 800 - lPaddle.height * 0.5)
-        lPaddle.y = 800 - 0.5 * lPaddle.height;
-    setTimeout(() => movePaddle(input, lPaddle, rPaddle), 10);
+function movePaddle(input, lPaddle, rPaddle, game) {
+    if (game.state === 1) {
+        if (input.arrowUp)
+            rPaddle.y -= rPaddle.speed;
+        if (input.arrowDown)
+            rPaddle.y += rPaddle.speed;
+        if (input.w)
+            lPaddle.y -= lPaddle.speed;
+        if (input.s)
+            lPaddle.y += lPaddle.speed;
+        if (rPaddle.y < 0.5 * rPaddle.height)
+            rPaddle.y = 0.5 * rPaddle.height;
+        else if (rPaddle.y > 800 - rPaddle.height * 0.5)
+            rPaddle.y = 800 - 0.5 * rPaddle.height;
+        if (lPaddle.y < 0.5 * lPaddle.height)
+            lPaddle.y = 0.5 * lPaddle.height;
+        else if (lPaddle.y > 800 - lPaddle.height * 0.5)
+            lPaddle.y = 800 - 0.5 * lPaddle.height;
+    }
+    setTimeout(() => movePaddle(input, lPaddle, rPaddle, game), 10);
 }
 wss.on("connection", (ws) => {
     console.log("Client connected");
@@ -181,25 +199,27 @@ wss.on("connection", (ws) => {
     let lPaddle = new Paddle(30, 800 / 2, 20, 200, 10, "#fcc800");
     let rPaddle = new Paddle(1200 - 30, 800 / 2, 20, 200, 10, "#fcc800");
     let input = new keyInput();
+    let game = new gameState();
     ws.on("message", (message) => {
         const { data, success, error } = inputSchema.safeParse(JSON.parse(message.toString()));
         if (!success || !data) {
             console.error(error);
             return;
         }
-        inputHandler(data.key, data.state, input);
+        inputHandler(data.key, data.state, input, game);
     });
     const intervalId = setInterval(() => {
         ws.send(JSON.stringify(lPaddle));
         ws.send(JSON.stringify(rPaddle));
         ws.send(JSON.stringify(ball));
+        ws.send(JSON.stringify(game));
     }, 10);
     ws.on("close", () => {
         clearInterval(intervalId);
         console.log("Client disconnected");
     });
-    moveBall(ball, lPaddle, rPaddle, input);
-    movePaddle(input, lPaddle, rPaddle);
+    moveBall(ball, lPaddle, rPaddle, input, game);
+    movePaddle(input, lPaddle, rPaddle, game);
 });
 server.listen(8080, () => {
     console.log("Server running on http://localhost:8080");
