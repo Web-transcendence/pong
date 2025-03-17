@@ -61,6 +61,7 @@ class gameState {
         this.maxScore = "6";
         this.score1 = "0";
         this.score2 = "0";
+        this.hazards = new Hazard(0, "default"); //Need fix ?
     }
     toJSON() {
         return { type: "Game", state: this.state, start: this.start, score1: this.score1, score2: this.score2 };
@@ -230,6 +231,7 @@ wss.on("connection", (ws) => {
     });
     moveBall(ball, lPaddle, rPaddle, input, game);
     movePaddle(input, lPaddle, rPaddle, game);
+    hazardGenerator(game);
 });
 server.listen(8080, () => {
     console.log("Server running on http://localhost:8080");
