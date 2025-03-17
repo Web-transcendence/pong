@@ -9,10 +9,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
-const inputSchema = z.object({
-    state: z.string(),
-    key: z.string(),
-});
+const inputSchema = z.object({ state: z.string(), key: z.string() });
 app.use(express.static(path.join(__dirname, "../public")));
 class Ball {
     constructor(x, y, angle, speed, radius, color) {
@@ -48,6 +45,13 @@ class keyInput {
         this.arrowDown = false;
         this.w = false;
         this.s = false;
+    }
+}
+class Hazard {
+    constructor(x, type) {
+        this.y = 0;
+        this.x = x;
+        this.type = type;
     }
 }
 class gameState {
@@ -192,6 +196,12 @@ function movePaddle(input, lPaddle, rPaddle, game) {
             lPaddle.y = 800 - 0.5 * lPaddle.height;
     }
     setTimeout(() => movePaddle(input, lPaddle, rPaddle, game), 10);
+}
+function hazardGenerator(game) {
+    if (game.state === 1) {
+        game.hazards = new Hazard(0, "BarSizeUp");
+    }
+    setTimeout(() => hazardGenerator(game), 30000);
 }
 wss.on("connection", (ws) => {
     console.log("Client connected");

@@ -10,10 +10,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
-const inputSchema = z.object({
-    state: z.string(),
-    key: z.string(),
-});
+const inputSchema = z.object({ state: z.string(), key: z.string() });
 
 app.use(express.static(path.join(__dirname, "../public")));
 
@@ -68,12 +65,23 @@ class keyInput {
     s: boolean = false;
 }
 
+class Hazard {
+    x: number;
+    y: number = 0;
+    type: string;
+    constructor (x: number, type: string) {
+        this.x = x;
+        this.type = type;
+    }
+}
+
 class gameState {
     state: number = 0;
     start: boolean = false;
     maxScore: string = "6";
     score1: string = "0";
     score2: string = "0";
+    hazards: Hazard = new Hazard(0, "default"); //Need fix ?
     toJSON() {
         return {type: "Game", state: this.state, start: this.start, score1: this.score1, score2: this.score2};
     }
@@ -215,6 +223,13 @@ function movePaddle(input: keyInput, lPaddle: Paddle, rPaddle: Paddle, game: gam
     setTimeout(() => movePaddle(input, lPaddle, rPaddle, game), 10);
 }
 
+function hazardGenerator(game: gameState) {
+    if (game.state === 1) {
+        game.hazards = new Hazard(0, "BarSizeUp");
+    }
+    setTimeout(() => hazardGenerator(game), 30000);
+}
+
 wss.on("connection", (ws) => {
     console.log("Client connected");
     let ball = new Ball (1200 / 2, 800 / 2, 0, 10, 10, "#fcc800");
@@ -246,6 +261,7 @@ wss.on("connection", (ws) => {
 
     moveBall(ball, lPaddle, rPaddle, input, game);
     movePaddle(input, lPaddle, rPaddle, game);
+    hazardGenerator(game);
 });
 
 server.listen(8080, () => {
