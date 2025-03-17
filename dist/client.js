@@ -89,7 +89,7 @@ function endScreen() {
     ctx.textAlign = "center";
     ctx.fillText("Press any key to restart game", canvas.width * 0.5, canvas.height * 0.65);
 }
-function animateBall() {
+function mainLoop() {
     ctx.fillStyle = "#101828";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#364153";
@@ -117,7 +117,7 @@ function gameLoop() {
             titleScreen();
             break;
         case 1:
-            animateBall();
+            mainLoop();
             break;
         case 2:
             endScreen();
