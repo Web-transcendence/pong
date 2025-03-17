@@ -3,22 +3,203 @@ import { WebSocketServer } from "ws";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { z } from "zod";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+const inputSchema = z.object({
+    state: z.string(),
+    key: z.string(),
+});
 app.use(express.static(path.join(__dirname, "../public")));
+class Ball {
+    constructor(x, y, angle, speed, radius, color) {
+        this.x = x;
+        this.y = y;
+        this.angle = angle;
+        this.speed = speed;
+        this.ispeed = speed;
+        this.radius = radius;
+        this.color = color;
+    }
+    toJSON() {
+        return { type: "Ball", x: this.x, y: this.y, radius: this.radius, color: this.color };
+    }
+}
+class Paddle {
+    constructor(x, y, width, height, speed, color) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.speed = speed;
+        this.color = color;
+        this.score = "0";
+    }
+    toJSON() {
+        return { type: "Paddle", x: this.x, y: this.y, width: this.width, height: this.height, color: this.color, score: this.score };
+    }
+}
+class keyInput {
+    constructor() {
+        this.arrowUp = false;
+        this.arrowDown = false;
+        this.w = false;
+        this.s = false;
+        this.start = false;
+    }
+}
+// class
+//
+// let maxScore = "6"
+function inputHandler(key, state, input) {
+    let upordown = false;
+    if (state === "down")
+        upordown = true;
+    if (key === "w")
+        input.w = upordown;
+    if (key === "s")
+        input.s = upordown;
+    if (key === "ArrowUp")
+        input.arrowUp = upordown;
+    if (key === "ArrowDown")
+        input.arrowDown = upordown;
+    if (key === "Control")
+        input.start = true;
+}
+function resetGame(ball, lPaddle, rPaddle, input) {
+    input.start = false;
+    if (ball.x < 0)
+        ball.angle = Math.PI;
+    else
+        ball.angle = 0;
+    ball.x = 0.5 * 1200;
+    ball.y = 0.5 * 800;
+    ball.speed = ball.ispeed;
+    lPaddle.y = 0.5 * 800;
+    rPaddle.y = 0.5 * 800;
+    // if (rPaddle.score === maxScore || lPaddle.score === maxScore) {
+    //     state = 3;
+    // }
+}
+function norAngle(ball) {
+    if (ball.angle < 0)
+        ball.angle += 2 * Math.PI;
+    if (ball.angle > 2 * Math.PI)
+        ball.angle -= 2 * Math.PI;
+}
+function checkCollision(oldX, oldY, ball, lPaddle, rPaddle) {
+    let sign = 1;
+    let posy = 0;
+    if (ball.angle > 0.5 * Math.PI && ball.angle < 1.5 * Math.PI)
+        sign = -1;
+    if (sign === 1)
+        posy = oldY + Math.tan(ball.angle) * (rPaddle.x - (0.5 * rPaddle.width) - oldX);
+    else if (sign === -1)
+        posy = oldY + Math.tan(ball.angle) * (lPaddle.x + (0.5 * lPaddle.width) - oldX);
+    if (sign === 1 && posy >= rPaddle.y - 0.5 * rPaddle.height && posy <= rPaddle.y + 0.5 * rPaddle.height)
+        return (1);
+    else if (sign === -1 && posy >= lPaddle.y - 0.5 * lPaddle.height && posy <= lPaddle.y + 0.5 * lPaddle.height)
+        return (2);
+    return (0);
+}
+function bounceAngle(ball, paddle, side) {
+    const ratio = (ball.y - paddle.y) / (paddle.height / 2);
+    ball.speed = ball.ispeed + 0.5 * ball.ispeed * Math.abs(ratio);
+    ball.angle = Math.PI * 0.25 * ratio;
+    if (side === "right")
+        ball.angle = Math.PI - ball.angle;
+    norAngle(ball);
+}
+function moveBall(ball, lPaddle, rPaddle, input) {
+    if (input.start) {
+        let oldX = ball.x;
+        let oldY = ball.y;
+        let collision = 0;
+        ball.x += Math.cos(ball.angle) * ball.speed;
+        ball.y += Math.sin(ball.angle) * ball.speed;
+        if ((ball.x > rPaddle.x - 0.5 * rPaddle.width && (ball.angle < 0.5 * Math.PI || ball.angle > 1.5 * Math.PI)) || (ball.x < lPaddle.x + 0.5 * lPaddle.width && (ball.angle > 0.5 * Math.PI && ball.angle < 1.5 * Math.PI)))
+            collision = checkCollision(oldX, oldY, ball, lPaddle, rPaddle); // 0 = nothing || 1 = right || 2 = left
+        if (collision === 1) {
+            oldY = oldY + Math.tan(ball.angle) * (rPaddle.x - (0.5 * rPaddle.width) - oldX);
+            oldX = rPaddle.x - (0.5 * rPaddle.width);
+            bounceAngle(ball, rPaddle, "right");
+            ball.x = oldX + Math.cos(ball.angle) * (Math.sqrt(Math.pow(ball.y - oldY, 2) + Math.pow(ball.x - oldX, 2)));
+            ball.y = oldY + Math.sin(ball.angle) * (Math.sqrt(Math.pow(ball.y - oldY, 2) + Math.pow(ball.x - oldX, 2)));
+        }
+        else if (collision === 2) {
+            oldY = oldY - Math.tan(ball.angle) * (lPaddle.x + (0.5 * lPaddle.width) - oldX);
+            oldX = lPaddle.x + (0.5 * lPaddle.width);
+            bounceAngle(ball, lPaddle, "left");
+            ball.x = oldX + Math.cos(ball.angle) * (Math.sqrt(Math.pow(ball.y - oldY, 2) + Math.pow(ball.x - oldX, 2)));
+            ball.y = oldY + Math.sin(ball.angle) * (Math.sqrt(Math.pow(ball.y - oldY, 2) + Math.pow(ball.x - oldX, 2)));
+        }
+        if (ball.x > 1200) {
+            lPaddle.score = String(Number(lPaddle.score) + 1);
+            resetGame(ball, lPaddle, rPaddle, input);
+        }
+        if (ball.x < 0) {
+            rPaddle.score = String(Number(rPaddle.score) + 1);
+            resetGame(ball, lPaddle, rPaddle, input);
+        }
+        if (ball.y > 800) {
+            ball.y = 800 - (ball.y - 800);
+            ball.angle = 2 * Math.PI - ball.angle;
+        }
+        else if (ball.y < 0) {
+            ball.y = -ball.y;
+            ball.angle = 2 * Math.PI - ball.angle;
+        }
+        norAngle(ball);
+    }
+    setTimeout(() => moveBall(ball, lPaddle, rPaddle, input), 10);
+}
+function movePaddle(input, lPaddle, rPaddle) {
+    if (input.arrowUp)
+        rPaddle.y -= rPaddle.speed;
+    if (input.arrowDown)
+        rPaddle.y += rPaddle.speed;
+    if (input.w)
+        lPaddle.y -= lPaddle.speed;
+    if (input.s)
+        lPaddle.y += lPaddle.speed;
+    if (rPaddle.y < 0.5 * rPaddle.height)
+        rPaddle.y = 0.5 * rPaddle.height;
+    else if (rPaddle.y > 800 - rPaddle.height * 0.5)
+        rPaddle.y = 800 - 0.5 * rPaddle.height;
+    if (lPaddle.y < 0.5 * lPaddle.height)
+        lPaddle.y = 0.5 * lPaddle.height;
+    else if (lPaddle.y > 800 - lPaddle.height * 0.5)
+        lPaddle.y = 800 - 0.5 * lPaddle.height;
+    setTimeout(() => movePaddle(input, lPaddle, rPaddle), 10);
+}
 wss.on("connection", (ws) => {
     console.log("Client connected");
+    let ball = new Ball(1200 / 2, 800 / 2, 0, 10, 10, "#fcc800");
+    let lPaddle = new Paddle(30, 800 / 2, 20, 200, 10, "#fcc800");
+    let rPaddle = new Paddle(1200 - 30, 800 / 2, 20, 200, 10, "#fcc800");
+    let input = new keyInput();
     ws.on("message", (message) => {
-        const data = JSON.parse(message.toString());
-        if (data.type === "input") {
-            console.log(`Touche ${data.key} est ${data.state}`);
-            // Traiter le mouvement de la raquette ici
+        const { data, success, error } = inputSchema.safeParse(JSON.parse(message.toString()));
+        if (!success || !data) {
+            console.error(error);
+            return;
         }
+        inputHandler(data.key, data.state, input);
     });
-    ws.on("close", () => console.log("Client disconnected"));
+    const intervalId = setInterval(() => {
+        ws.send(JSON.stringify(lPaddle));
+        ws.send(JSON.stringify(rPaddle));
+        ws.send(JSON.stringify(ball));
+    }, 10);
+    ws.on("close", () => {
+        clearInterval(intervalId);
+        console.log("Client disconnected");
+    });
+    moveBall(ball, lPaddle, rPaddle, input);
+    movePaddle(input, lPaddle, rPaddle);
 });
 server.listen(8080, () => {
     console.log("Server running on http://localhost:8080");
