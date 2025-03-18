@@ -36,6 +36,29 @@ class gameState {
     start: boolean = false;
     score1: string = "0";
     score2: string = "0";
+    hazard: Hazard = new Hazard (0, 0, "Default");
+}
+
+class Hazard {
+    x: number;
+    y: number;
+    type: string;
+    constructor (x: number, y: number, type: string) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+    }
+}
+
+class Assets {
+    BarUp: HTMLImageElement = new Image();
+    BarDown: HTMLImageElement = new Image();
+    BallUp: HTMLImageElement = new Image();
+    constructor () {
+        this.BarUp.src = "../assets/barup.png";
+        this.BarDown.src = "../assets/bardown.png";
+        this.BallUp.src = "../assets/ballup.png";
+    }
 }
 
 let animFrame = 0;
@@ -44,6 +67,7 @@ let game = new gameState();
 let ball = new Ball(canvas.width / 2, canvas.height / 2, 10, "#fcc800");
 let lPaddle = new Paddle(30, canvas.height / 2, 20, 200, "#fcc800");
 let rPaddle = new Paddle(canvas.width - 30, canvas.height / 2, 20, 200, "#fcc800");
+let asset = new Assets;
 
 function titleScreen() {
     ctx.fillStyle = "#364153";
@@ -104,27 +128,56 @@ function endScreen() {
     ctx.fillText("Press any key to restart game", canvas.width * 0.5, canvas.height * 0.65);
 }
 
+function drawHazard() {
+    switch (game.hazard.type) {
+        case "BarSizeUp":
+            ctx?.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            //ctx.fillStyle = "green";
+            //ctx.fillRect(game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            break;
+        case "BarSizeDown":
+            ctx?.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            //ctx.fillStyle = "red";
+            //ctx.fillRect(game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            break;
+        case "BallSpeedUp":
+            ctx?.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            //ctx.fillStyle = "blue";
+            //ctx.fillRect(game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            break;
+        default:
+            break;
+    }
+}
+
 function mainLoop() {
+    // Background
     ctx.fillStyle = "#101828";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Mid
     ctx.fillStyle = "#364153";
-    for (let i = 0; i < canvas.height; i += 60) {
+    for (let i = 0; i < canvas.height; i += 60)
         ctx.fillRect(canvas.width * 0.5 - 4, i, 8, 30);
-    }
-    ctx.fillStyle = ball.color;
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = lPaddle.color;
-    ctx.fillRect(lPaddle.x - lPaddle.width * 0.5, lPaddle.y - lPaddle.height * 0.5, lPaddle.width, lPaddle.height);
-    ctx.fillStyle = rPaddle.color;
-    ctx.fillRect(rPaddle.x - rPaddle.width * 0.5, rPaddle.y - rPaddle.height * 0.5, rPaddle.width, rPaddle.height);
+    // Score
     ctx.fillStyle = "#fcc800";
     ctx.font = "48px 'Press Start 2P'";
     ctx.textAlign = "left"
     ctx.fillText(rPaddle.score, canvas.width * 0.5 + 46, 80);
     ctx.textAlign = "right"
     ctx.fillText(lPaddle.score, canvas.width * 0.5 - 40, 80);
+    // Hazard
+    drawHazard();
+    // Ball
+    ctx.fillStyle = ball.color;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    ctx.fill();
+    // lPaddle
+    ctx.fillStyle = lPaddle.color;
+    ctx.fillRect(lPaddle.x - lPaddle.width * 0.5, lPaddle.y - lPaddle.height * 0.5, lPaddle.width, lPaddle.height);
+    // rPaddle
+    ctx.fillStyle = rPaddle.color;
+    ctx.fillRect(rPaddle.x - rPaddle.width * 0.5, rPaddle.y - rPaddle.height * 0.5, rPaddle.width, rPaddle.height);
 }
 
 function gameLoop () {
@@ -164,6 +217,9 @@ socket.onmessage = function (event) {
             game.score1 = data.score1;
             game.score2 = data.score2;
             game.start = data.start;
+            game.hazard.x = data.hazard.x;
+            game.hazard.y = data.hazard.y;
+            game.hazard.type = data.hazard.type;
             break;
         case "Ball":
             ball.x = data.x;
