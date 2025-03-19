@@ -55,9 +55,9 @@ class Assets {
     BarDown: HTMLImageElement = new Image();
     BallUp: HTMLImageElement = new Image();
     constructor () {
-        this.BarUp.src = "../assets/barup.png";
-        this.BarDown.src = "../assets/bardown.png";
-        this.BallUp.src = "../assets/ballup.png";
+        this.BarUp.src = "./assets/barup.png";
+        this.BarDown.src = "./assets/bardown.png";
+        this.BallUp.src = "./assets/ballup.png";
     }
 }
 
@@ -131,17 +131,17 @@ function endScreen() {
 function drawHazard() {
     switch (game.hazard.type) {
         case "BarSizeUp":
-            ctx?.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            ctx.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             //ctx.fillStyle = "green";
             //ctx.fillRect(game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             break;
         case "BarSizeDown":
-            ctx?.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            ctx.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             //ctx.fillStyle = "red";
             //ctx.fillRect(game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             break;
         case "BallSpeedUp":
-            ctx?.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            ctx.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             //ctx.fillStyle = "blue";
             //ctx.fillRect(game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             break;
