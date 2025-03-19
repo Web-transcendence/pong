@@ -91,7 +91,13 @@ function inputHandler(key, state, input, game) {
     else if (state === "down")
         game.state = 1;
 }
-function resetGame(ball, lPaddle, rPaddle, game) {
+function resetInput(input) {
+    input.arrowUp = false;
+    input.arrowDown = false;
+    input.w = false;
+    input.arrowUp = false;
+}
+function resetGame(ball, lPaddle, rPaddle, game, input) {
     game.start = false;
     if (ball.x < 0)
         ball.angle = Math.PI;
@@ -111,6 +117,7 @@ function resetGame(ball, lPaddle, rPaddle, game) {
         rPaddle.score = "0";
         lPaddle.score = "0";
     }
+    resetInput(input);
 }
 function norAngle(ball) {
     if (ball.angle < 0)
@@ -164,19 +171,19 @@ function moveBall(ball, lPaddle, rPaddle, input, game) {
             ball.x = oldX + Math.cos(ball.angle) * (Math.sqrt(Math.pow(ball.y - oldY, 2) + Math.pow(ball.x - oldX, 2)));
             ball.y = oldY + Math.sin(ball.angle) * (Math.sqrt(Math.pow(ball.y - oldY, 2) + Math.pow(ball.x - oldX, 2)));
         }
-        if (ball.x > game.hazard.x - 30 && ball.x < game.hazard.x + 30) { // Hazard size is 50 but hitbox is 60 to cover ball radius
-            if (ball.y > game.hazard.y - 30 && ball.y < game.hazard.y + 30) {
+        if (ball.x > game.hazard.x - 37 && ball.x < game.hazard.x + 37) { // Hazard size is 50 but hitbox is 74 to cover ball radius
+            if (ball.y > game.hazard.y - 37 && ball.y < game.hazard.y + 37) {
                 hazardEffect(game, ball, lPaddle, rPaddle);
                 game.hazard.type = "Default";
             }
         }
         if (ball.x > 1200) {
             lPaddle.score = String(Number(lPaddle.score) + 1);
-            resetGame(ball, lPaddle, rPaddle, game);
+            resetGame(ball, lPaddle, rPaddle, game, input);
         }
         if (ball.x < 0) {
             rPaddle.score = String(Number(rPaddle.score) + 1);
-            resetGame(ball, lPaddle, rPaddle, game);
+            resetGame(ball, lPaddle, rPaddle, game, input);
         }
         if (ball.y > 800) {
             ball.y = 800 - (ball.y - 800);
@@ -270,7 +277,7 @@ function hazardGenerator(game) {
 }
 wss.on("connection", (ws) => {
     console.log("Client connected");
-    let ball = new Ball(1200 / 2, 800 / 2, 0, 10, 10, "#fcc800");
+    let ball = new Ball(1200 / 2, 800 / 2, 0, 8, 12, "#fcc800");
     let lPaddle = new Paddle(30, 800 / 2, 20, 200, 10, "#fcc800");
     let rPaddle = new Paddle(1200 - 30, 800 / 2, 20, 200, 10, "#fcc800");
     let input = new keyInput();

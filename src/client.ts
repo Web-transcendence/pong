@@ -136,12 +136,12 @@ function drawHazard() {
             //ctx.fillRect(game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             break;
         case "BarSizeDown":
-            ctx.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            ctx.drawImage(asset.BarDown, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             //ctx.fillStyle = "red";
             //ctx.fillRect(game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             break;
         case "BallSpeedUp":
-            ctx.drawImage(asset.BarUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
+            ctx.drawImage(asset.BallUp, game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             //ctx.fillStyle = "blue";
             //ctx.fillRect(game.hazard.x - 25, game.hazard.y - 25, 50, 50);
             break;
@@ -166,18 +166,26 @@ function mainLoop() {
     ctx.textAlign = "right"
     ctx.fillText(lPaddle.score, canvas.width * 0.5 - 40, 80);
     // Hazard
+    // if (game.hazard.type !== "Default") { // Hazard hitbox
+    //     ctx.fillStyle = "red";
+    //     ctx.fillRect(game.hazard.x - 37, game.hazard.y - 37, 74, 74);
+    // }
     drawHazard();
-    // Ball
+    // Ball : Square or Circle ?
     ctx.fillStyle = ball.color;
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(ball.x - ball.radius, ball.y - ball.radius + 4, ball.radius * 2, (ball.radius - 4) * 2)
+    ctx.fillRect(ball.x - ball.radius + 4, ball.y - ball.radius, (ball.radius - 4) * 2, ball.radius * 2)
+    // ctx.beginPath();
+    // ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    // ctx.fill();
     // lPaddle
     ctx.fillStyle = lPaddle.color;
-    ctx.fillRect(lPaddle.x - lPaddle.width * 0.5, lPaddle.y - lPaddle.height * 0.5, lPaddle.width, lPaddle.height);
+    ctx.fillRect(lPaddle.x + 3 - lPaddle.width * 0.5, lPaddle.y - lPaddle.height * 0.5, lPaddle.width - 6, lPaddle.height);
+    ctx.fillRect(lPaddle.x - lPaddle.width * 0.5, lPaddle.y + 3 - lPaddle.height * 0.5, lPaddle.width, lPaddle.height - 6);
     // rPaddle
     ctx.fillStyle = rPaddle.color;
-    ctx.fillRect(rPaddle.x - rPaddle.width * 0.5, rPaddle.y - rPaddle.height * 0.5, rPaddle.width, rPaddle.height);
+    ctx.fillRect(rPaddle.x + 3 - rPaddle.width * 0.5, rPaddle.y - rPaddle.height * 0.5, rPaddle.width - 6, rPaddle.height);
+    ctx.fillRect(rPaddle.x - rPaddle.width * 0.5, rPaddle.y + 3 - rPaddle.height * 0.5, rPaddle.width, rPaddle.height - 6);
 }
 
 function gameLoop () {
