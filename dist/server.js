@@ -277,6 +277,7 @@ function hazardGenerator(game) {
 }
 wss.on("connection", (ws) => {
     console.log("Client connected");
+    console.log(ws);
     let ball = new Ball(1200 / 2, 800 / 2, 0, 8, 12, "#fcc800");
     let lPaddle = new Paddle(30, 800 / 2, 20, 200, 10, "#fcc800");
     let rPaddle = new Paddle(1200 - 30, 800 / 2, 20, 200, 10, "#fcc800");
